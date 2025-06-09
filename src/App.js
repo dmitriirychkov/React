@@ -1,31 +1,71 @@
 import React, { useState } from 'react';
-import logo from './logo.svg';
-import './App.css';
+
+import * as yup from 'yup';
+
+const schema = yup.object().shape({
+  username: yup.string().required('Имя пользователя обязательно'),
+  email: yup.string().email('Некорректный email').required('Email обязателен'),
+});
 
 function App() {
-  const [text, setText] = useState('Edit src/App.js and save to reload.');
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+  });
+  const [errors, setErrors] = useState({});
 
-  const handleClick = () => {
-    setText('The text has been updated!');
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const validateForm = async () => {
+    try {
+      await schema.validate(formData, { abortEarly: false });
+      setErrors({});
+      alert('Форма валидна!');
+    } catch (err) {
+      const newErrors = {};
+      err.inner.forEach((error) => {
+        newErrors[error.path] = error.message;
+      });
+      setErrors(newErrors);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    validateForm();
   };
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>{text}</p>
-        <button onClick={handleClick} className="App-button">
-          Change Text
-        </button>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Имя пользователя:</label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+          />
+          {errors.username && <p className="error">{errors.username}</p>}
+        </div>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          {errors.email && <p className="error">{errors.email}</p>}
+        </div>
+        <button type="submit">Отправить</button>
+      </form>
     </div>
   );
 }
